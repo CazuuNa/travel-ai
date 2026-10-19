@@ -1,0 +1,13 @@
+{
+  email {$TLS_EMAIL}
+}
+{$DOMAIN} {
+  reverse_proxy web:8080 {
+    flush_interval -1
+    header_up X-Forwarded-For {remote_host}
+  }
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}

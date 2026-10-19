@@ -1,0 +1,37 @@
+name: travel-ai-cloud
+services:
+  db:
+    extends:
+      file: ../local/compose.yaml
+      service: db
+  api:
+    extends:
+      file: ../local/compose.yaml
+      service: api
+    environment:
+      TRUST_PROXY_HOPS: '2'
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.web
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    logging: { driver: json-file, options: { max-size: 10m, max-file: '3' } }
+  gateway:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+      TLS_EMAIL: ${TLS_EMAIL:?Set TLS_EMAIL}
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+    restart: unless-stopped
+    logging: { driver: json-file, options: { max-size: 10m, max-file: '3' } }
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
